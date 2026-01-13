@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>技術計算ツール</title>
+  <title>技術計算ツール（片持ちはり）</title>
   <style>
     body { font-family: sans-serif; background:#f0f2f5; margin:0; padding:10px; display: flex; justify-content: center; align-items: flex-start; min-height: 100vh; }
     .box { background:#fff; padding:15px; width:100%; max-width:400px; border-radius:10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
@@ -14,13 +14,14 @@
     .content { display: none; }
     .content.active { display: block; }
     .input-group { display: flex; align-items: center; margin-bottom: 6px; }
-    .input-group.hidden { display: none; } /* 非表示用 */
-    label { flex: 0 0 120px; font-size: 13px; font-weight: bold; color: #555; }
+    .input-group.hidden { display: none; }
+    label { flex: 0 0 125px; font-size: 13px; font-weight: bold; color: #555; }
     input, select { flex: 1; padding: 6px; font-size: 14px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
     button.btn-calc { width: 100%; padding: 10px; margin-top: 8px; font-size: 16px; font-weight: bold; color: white; border: none; border-radius: 5px; cursor: pointer; }
     .btn-def { background: #007bff; }
     .btn-mass { background: #28a745; }
     .result { margin-top: 10px; padding: 8px; font-size: 17px; font-weight: bold; color: #d9534f; text-align: center; background: #fff5f5; border-radius: 5px; border: 1px solid #ffebeb; }
+    .info { font-size: 11px; color: #888; text-align: center; margin-bottom: 10px; }
   </style>
 </head>
 <body>
@@ -32,14 +33,15 @@
   </div>
 
   <div id="deflection" class="content active">
-    <h3>はりのたわみ</h3>
+    <h3>片持ちはりのたわみ</h3>
+    <p class="info">※固定端から先端への集中荷重として計算</p>
     <form onsubmit="calcDef(); return false;">
       <div class="input-group"><label>形状</label><select id="d_s" onchange="updateLabels('d')"><option value="block">角材</option><option value="round">丸棒</option><option value="l">L形鋼</option><option value="h">H/I形鋼</option></select></div>
       <div class="input-group"><label id="d_la">寸法 a (高) mm</label><input type="number" id="d_a" step="any" required></div>
       <div class="input-group" id="d_group_b"><label>寸法 b (幅) mm</label><input type="number" id="d_b" step="any"></div>
       <div class="input-group" id="d_group_t"><label>厚さ t mm</label><input type="number" id="d_t" step="any"></div>
-      <div class="input-group"><label>スパン L mm</label><input type="number" id="d_L" step="any" required></div>
-      <div class="input-group"><label>荷重 P N</label><input type="number" id="d_P" step="any" required></div>
+      <div class="input-group"><label>長さ L mm</label><input type="number" id="d_L" step="any" required></div>
+      <div class="input-group"><label>先端荷重 P N</label><input type="number" id="d_P" step="any" required></div>
       <div class="input-group"><label>材質 E GPa</label><select id="d_E"><option value="205">鉄 (205)</option><option value="70">アルミ (70)</option><option value="3">樹脂 (3)</option></select></div>
       <button type="submit" class="btn-calc btn-def">たわみを計算</button>
       <div class="result" id="res_def">-- mm</div>
@@ -69,7 +71,6 @@ function showPage(pId, btn) {
   btn.classList.add('active');
 }
 
-// 形状に合わせてラベルと表示/非表示を切り替える関数
 function updateLabels(prefix) {
   const shape = document.getElementById(prefix + "_s").value;
   const labelA = document.getElementById(prefix + "_la");
@@ -83,7 +84,7 @@ function updateLabels(prefix) {
   } else if (shape === "block") {
     labelA.textContent = "寸法 a (高) mm";
     groupB.classList.remove("hidden");
-    groupT.classList.add("hidden"); // 角材のときは厚さtを消す
+    groupT.classList.add("hidden");
   } else {
     labelA.textContent = "寸法 a (高) mm";
     groupB.classList.remove("hidden");
@@ -92,26 +93,43 @@ function updateLabels(prefix) {
 }
 
 function calcDef() {
-  const s=document.getElementById("d_s").value, a=parseFloat(document.getElementById("d_a").value), b=parseFloat(document.getElementById("d_b").value)||0, t=parseFloat(document.getElementById("d_t").value)||0, L=parseFloat(document.getElementById("d_L").value), P=parseFloat(document.getElementById("d_P").value), E=parseFloat(document.getElementById("d_E").value)*1000;
+  const s=document.getElementById("d_s").value, 
+        a=parseFloat(document.getElementById("d_a").value), 
+        b=parseFloat(document.getElementById("d_b").value)||0, 
+        t=parseFloat(document.getElementById("d_t").value)||0, 
+        L=parseFloat(document.getElementById("d_L").value), 
+        P=parseFloat(document.getElementById("d_P").value), 
+        E=parseFloat(document.getElementById("d_E").value)*1000;
+  
   let I=0;
-  if(s==="block") I=(b*a**3)/12; 
-  else if(s==="round") I=(Math.PI*a**4)/64; 
-  else if(s==="l") I=(b*a**3-(b-t)*(a-t)**3)/12; 
-  else if(s==="h") I=(b*a**3-(b-t)*(a-2*t)**3)/12;
-  document.getElementById("res_def").textContent = (P*L**3/(48*E*I)).toFixed(3) + " mm";
+  if(s==="block") I=(b*Math.pow(a,3))/12; 
+  else if(s==="round") I=(Math.PI*Math.pow(a,4))/64; 
+  else if(s==="l") I=(b*Math.pow(a,3)-(b-t)*Math.pow(a-t,3))/12; 
+  else if(s==="h") I=(b*Math.pow(a,3)-(b-t)*Math.pow(a-2*t,3))/12;
+
+  // 片持ちはりの先端集中荷重たわみ公式: δ = (P * L^3) / (3 * E * I)
+  const delta = (P * Math.pow(L, 3)) / (3 * E * I);
+  document.getElementById("res_def").textContent = delta.toFixed(3) + " mm";
 }
 
 function calcMass() {
-  const s=document.getElementById("m_s").value, a=parseFloat(document.getElementById("m_a").value), b=parseFloat(document.getElementById("m_b").value)||0, t=parseFloat(document.getElementById("m_t").value)||0, L=parseFloat(document.getElementById("m_L").value), d=parseFloat(document.getElementById("m_d").value);
+  const s=document.getElementById("m_s").value, 
+        a=parseFloat(document.getElementById("m_a").value), 
+        b=parseFloat(document.getElementById("m_b").value)||0, 
+        t=parseFloat(document.getElementById("m_t").value)||0, 
+        L=parseFloat(document.getElementById("m_L").value), 
+        d=parseFloat(document.getElementById("m_d").value);
+  
   let area=0;
   if(s==="block") area=a*b; 
-  else if(s==="round") area=Math.PI*(a/2)**2; 
-  else if(s==="l") area=a*t+b*t-t**2; 
+  else if(s==="round") area=Math.PI*Math.pow((a/2),2); 
+  else if(s==="l") area=a*t+b*t-Math.pow(t,2); 
   else if(s==="h") area=2*b*t+(a-2*t)*t;
-  document.getElementById("res_mass").textContent = (area*L/1000000*d).toFixed(3) + " kg";
+  
+  const mass = (area * L / 1000000) * d;
+  document.getElementById("res_mass").textContent = mass.toFixed(3) + " kg";
 }
 
-// 初期化
 updateLabels('d');
 updateLabels('m');
 </script>
