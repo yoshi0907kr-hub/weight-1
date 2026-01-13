@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <title>質量計算機</title>
+  <title>たわみ計算機</title>
   <style>
     body { font-family: sans-serif; background:#f5f5f5; padding:20px; }
     .box { background:#fff; padding:20px; max-width:420px; border-radius:8px; }
@@ -13,7 +13,7 @@
 <body>
 
 <div class="box">
-  <h2>質量計算機（kg）</h2>
+  <h2>はりのたわみ計算機</h2>
 
   <form onsubmit="calc(); return false;">
 
@@ -35,15 +35,17 @@
     <label>板厚 t（mm）</label>
     <input type="number" id="t">
 
-    <label>長さ L（mm）</label>
+    <label>スパン L（mm）</label>
     <input type="number" id="L">
 
-    <label>密度（g/cm³）</label>
-    <select id="density">
-      <option value="7.85">鉄</option>
-      <option value="2.7">アルミ</option>
-      <option value="1.15">MCナイロン</option>
-      <option value="1.0">水</option>
+    <label>中央荷重 P（N）</label>
+    <input type="number" id="P">
+
+    <label>縦弾性係数 E（GPa）</label>
+    <select id="E">
+      <option value="205">鉄</option>
+      <option value="70">アルミ</option>
+      <option value="3">MCナイロン</option>
     </select>
 
     <button type="submit">計算（Enter可）</button>
@@ -59,21 +61,23 @@ function calc() {
   const b = Number(b.value);
   const t = Number(t.value);
   const L = Number(L.value);
-  const d = Number(density.value);
+  const P = Number(P.value);
+  const E = Number(E.value) * 1000;
 
-  if (!a || !L) {
+  if (!a || !L || !P) {
     result.textContent = "数値を正しく入力してください";
     return;
   }
 
-  let area = 0;
-  if (s === "block") area = a * b;
-  if (s === "round") area = Math.PI * (a/2)**2;
-  if (s === "l") area = a*t + b*t - t*t;
-  if (s === "i" || s === "h") area = 2*b*t + (a-2*t)*t;
+  let I = 0;
+  if (s === "block") I = b * a**3 / 12;
+  if (s === "round") I = Math.PI * a**4 / 64;
+  if (s === "l") I = (b*a**3 - (b-t)*(a-t)**3) / 12;
+  if (s === "i" || s === "h")
+    I = (b*a**3 - (b-t)*(a-2*t)**3) / 12;
 
-  const mass = area * L / 1e6 * d;
-  result.textContent = "質量：約 " + mass.toFixed(3) + " kg";
+  const delta = P * L**3 / (48 * E * I);
+  result.textContent = "最大たわみ：約 " + delta.toFixed(3) + " mm";
 }
 </script>
 
