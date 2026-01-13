@@ -2,147 +2,98 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>技術計算ツール集</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>技術計算ツール</title>
   <style>
-    body { font-family: sans-serif; background:#f5f5f5; padding:20px; display: flex; justify-content: center; }
-    .box { background:#fff; padding:25px; width:100%; max-width:450px; border-radius:12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+    body { font-family: sans-serif; background:#f0f2f5; margin:0; padding:10px; display: flex; justify-content: center; align-items: flex-start; min-height: 100vh; }
+    .box { background:#fff; padding:15px; width:100%; max-width:400px; border-radius:10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
     
-    /* メニュータブのスタイル */
-    .menu-tabs { display: flex; margin-bottom: 20px; border-bottom: 2px solid #eee; }
-    .tab-btn { flex: 1; padding: 10px; cursor: pointer; border: none; background: none; font-size: 16px; font-weight: bold; color: #888; transition: 0.3s; }
-    .tab-btn.active { color: #007bff; border-bottom: 3px solid #007bff; }
+    h3 { margin: 0 0 10px 0; font-size: 18px; text-align: center; color: #333; }
     
-    /* コンテンツの表示制御 */
+    .menu-tabs { display: flex; margin-bottom: 10px; gap: 5px; }
+    .tab-btn { flex: 1; padding: 8px; cursor: pointer; border: 1px solid #ddd; border-radius: 5px; background: #f8f9fa; font-size: 14px; color: #666; }
+    .tab-btn.active { background: #007bff; color: #fff; border-color: #007bff; }
+    
     .content { display: none; }
     .content.active { display: block; }
 
-    label { display: block; margin-top: 12px; font-size: 14px; font-weight: bold; color: #444; }
-    input, select, button { width:100%; margin-top: 5px; margin-bottom:10px; padding:10px; font-size:16px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
+    .input-group { display: flex; align-items: center; margin-bottom: 6px; }
+    label { flex: 0 0 110px; font-size: 13px; font-weight: bold; color: #555; }
+    input, select { flex: 1; padding: 6px; font-size: 14px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
     
-    .btn-calc { background: #007bff; color: white; border: none; cursor: pointer; margin-top: 15px; font-weight: bold; }
-    .btn-calc:hover { background: #0056b3; }
+    button.btn-calc { width: 100%; padding: 10px; margin-top: 8px; font-size: 16px; font-weight: bold; color: white; border: none; border-radius: 5px; cursor: pointer; }
+    .btn-def { background: #007bff; }
     .btn-mass { background: #28a745; }
-    .btn-mass:hover { background: #218838; }
 
-    .result { font-size:20px; font-weight:bold; color: #d9534f; margin-top: 20px; text-align: center; background: #fff5f5; padding: 10px; border-radius: 6px; }
+    .result { margin-top: 10px; padding: 8px; font-size: 17px; font-weight: bold; color: #d9534f; text-align: center; background: #fff5f5; border-radius: 5px; border: 1px solid #ffebeb; }
+    
+    /* 小さい画面での微調整 */
+    @media (max-height: 600px) {
+      body { padding: 5px; }
+      .box { padding: 10px; }
+      h3 { font-size: 16px; margin-bottom: 5px; }
+      .input-group { margin-bottom: 4px; }
+    }
   </style>
 </head>
 <body>
 
 <div class="box">
   <div class="menu-tabs">
-    <button class="tab-btn active" onclick="showPage('deflection', this)">たわみ計算</button>
-    <button class="tab-btn" onclick="showPage('mass', this)">質量計算</button>
+    <button class="tab-btn active" onclick="showPage('deflection', this)">たわみ</button>
+    <button class="tab-btn" onclick="showPage('mass', this)">質量</button>
   </div>
 
   <div id="deflection" class="content active">
-    <h3>はりのたわみ計算</h3>
-    <form onsubmit="calcDeflection(); return false;">
-      <label>断面形状</label>
-      <select id="d_shape">
-        <option value="block">角材</option>
-        <option value="round">丸棒</option>
-        <option value="l">L形鋼</option>
-        <option value="h">H/I形鋼</option>
-      </select>
-      <label>寸法 a (高さ/直径) [mm]</label>
-      <input type="number" id="d_a" step="any" required>
-      <label>寸法 b (幅) [mm]</label>
-      <input type="number" id="d_b" step="any">
-      <label>板厚 t [mm]</label>
-      <input type="number" id="d_t" step="any">
-      <label>スパン L [mm]</label>
-      <input type="number" id="d_L" step="any" required>
-      <label>中央荷重 P [N]</label>
-      <input type="number" id="d_P" step="any" required>
-      <label>縦弾性係数 E [GPa]</label>
-      <select id="d_E">
-        <option value="205">鉄 (205)</option>
-        <option value="70">アルミ (70)</option>
-        <option value="3">MCナイロン (3)</option>
-      </select>
-      <button type="submit" class="btn-calc">たわみを計算</button>
-      <div class="result" id="res_def">結果が表示されます</div>
+    <h3>はりのたわみ</h3>
+    <form onsubmit="calcDef(); return false;">
+      <div class="input-group"><label>形状</label><select id="d_s"><option value="block">角材</option><option value="round">丸棒</option><option value="l">L形鋼</option><option value="h">H/I形鋼</option></select></div>
+      <div class="input-group"><label>寸法 a (高) mm</label><input type="number" id="d_a" step="any" required></div>
+      <div class="input-group"><label>寸法 b (幅) mm</label><input type="number" id="d_b" step="any"></div>
+      <div class="input-group"><label>厚さ t mm</label><input type="number" id="d_t" step="any"></div>
+      <div class="input-group"><label>スパン L mm</label><input type="number" id="d_L" step="any" required></div>
+      <div class="input-group"><label>荷重 P N</label><input type="number" id="d_P" step="any" required></div>
+      <div class="input-group"><label>材質 E GPa</label><select id="d_E"><option value="205">鉄 (205)</option><option value="70">アルミ (70)</option><option value="3">樹脂 (3)</option></select></div>
+      <button type="submit" class="btn-calc btn-def">たわみを計算</button>
+      <div class="result" id="res_def">-- mm</div>
     </form>
   </div>
 
   <div id="mass" class="content">
-    <h3>質量計算（kg）</h3>
+    <h3>質量計算</h3>
     <form onsubmit="calcMass(); return false;">
-      <label>断面形状</label>
-      <select id="m_shape">
-        <option value="block">角材</option>
-        <option value="round">丸棒</option>
-        <option value="l">L形鋼</option>
-        <option value="h">H/I形鋼</option>
-      </select>
-      <label>寸法 a (mm)</label>
-      <input type="number" id="m_a" step="any" required>
-      <label>寸法 b (mm)</label>
-      <input type="number" id="m_b" step="any">
-      <label>板厚 t (mm)</label>
-      <input type="number" id="m_t" step="any">
-      <label>長さ L (mm)</label>
-      <input type="number" id="m_L" step="any" required>
-      <label>密度 (g/cm³)</label>
-      <select id="m_d">
-        <option value="7.85">鉄 (7.85)</option>
-        <option value="2.7">アルミ (2.7)</option>
-        <option value="1.15">MCナイロン (1.15)</option>
-      </select>
+      <div class="input-group"><label>形状</label><select id="m_s"><option value="block">角材</option><option value="round">丸棒</option><option value="l">L形鋼</option><option value="h">H/I形鋼</option></select></div>
+      <div class="input-group"><label>寸法 a mm</label><input type="number" id="m_a" step="any" required></div>
+      <div class="input-group"><label>寸法 b mm</label><input type="number" id="m_b" step="any"></div>
+      <div class="input-group"><label>厚さ t mm</label><input type="number" id="m_t" step="any"></div>
+      <div class="input-group"><label>長さ L mm</label><input type="number" id="m_L" step="any" required></div>
+      <div class="input-group"><label>密度 g/cm³</label><select id="m_d"><option value="7.85">鉄 (7.85)</option><option value="2.7">アルミ (2.7)</option><option value="1.15">樹脂 (1.15)</option></select></div>
       <button type="submit" class="btn-calc btn-mass">質量を計算</button>
-      <div class="result" id="res_mass">結果が表示されます</div>
+      <div class="result" id="res_mass">-- kg</div>
     </form>
   </div>
 </div>
 
 <script>
-// 画面切り替えの関数
-function showPage(pageId, btn) {
+function showPage(pId, btn) {
   document.querySelectorAll('.content').forEach(el => el.classList.remove('active'));
   document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
-  document.getElementById(pageId).classList.add('active');
+  document.getElementById(pId).classList.add('active');
   btn.classList.add('active');
 }
 
-// たわみ計算ロジック
-function calcDeflection() {
-  const shape = document.getElementById("d_shape").value;
-  const a = parseFloat(document.getElementById("d_a").value);
-  const b = parseFloat(document.getElementById("d_b").value) || 0;
-  const t = parseFloat(document.getElementById("d_t").value) || 0;
-  const L = parseFloat(document.getElementById("d_L").value);
-  const P = parseFloat(document.getElementById("d_P").value);
-  const E = parseFloat(document.getElementById("d_E").value) * 1000;
-  
-  let I = 0;
-  if (shape === "block") I = (b * Math.pow(a, 3)) / 12;
-  else if (shape === "round") I = (Math.PI * Math.pow(a, 4)) / 64;
-  else if (shape === "l") I = (b * Math.pow(a, 3) - (b - t) * Math.pow(a - t, 3)) / 12;
-  else if (shape === "h") I = (b * Math.pow(a, 3) - (b - t) * Math.pow(a - 2 * t, 3)) / 12;
-
-  const delta = (P * Math.pow(L, 3)) / (48 * E * I);
-  document.getElementById("res_def").textContent = "最大たわみ: " + delta.toFixed(3) + " mm";
+function calcDef() {
+  const s=document.getElementById("d_s").value, a=parseFloat(document.getElementById("d_a").value), b=parseFloat(document.getElementById("d_b").value)||0, t=parseFloat(document.getElementById("d_t").value)||0, L=parseFloat(document.getElementById("d_L").value), P=parseFloat(document.getElementById("d_P").value), E=parseFloat(document.getElementById("d_E").value)*1000;
+  let I=0;
+  if(s==="block") I=(b*a**3)/12; else if(s==="round") I=(Math.PI*a**4)/64; else if(s==="l") I=(b*a**3-(b-t)*(a-t)**3)/12; else if(s==="h") I=(b*a**3-(b-t)*(a-2*t)**3)/12;
+  document.getElementById("res_def").textContent = (P*L**3/(48*E*I)).toFixed(3) + " mm";
 }
 
-// 質量計算ロジック
 function calcMass() {
-  const shape = document.getElementById("m_shape").value;
-  const a = parseFloat(document.getElementById("m_a").value);
-  const b = parseFloat(document.getElementById("m_b").value) || 0;
-  const t = parseFloat(document.getElementById("m_t").value) || 0;
-  const L = parseFloat(document.getElementById("m_L").value);
-  const dens = parseFloat(document.getElementById("m_d").value);
-
-  let area = 0;
-  if (shape === "block") area = a * b;
-  else if (shape === "round") area = Math.PI * Math.pow((a / 2), 2);
-  else if (shape === "l") area = (a * t) + (b * t) - (t * t);
-  else if (shape === "h") area = (2 * b * t) + ((a - 2 * t) * t);
-
-  const mass = (area * L / 1000000) * dens;
-  document.getElementById("res_mass").textContent = "質量: " + mass.toFixed(3) + " kg";
+  const s=document.getElementById("m_s").value, a=parseFloat(document.getElementById("m_a").value), b=parseFloat(document.getElementById("m_b").value)||0, t=parseFloat(document.getElementById("m_t").value)||0, L=parseFloat(document.getElementById("m_L").value), d=parseFloat(document.getElementById("m_d").value);
+  let area=0;
+  if(s==="block") area=a*b; else if(s==="round") area=Math.PI*(a/2)**2; else if(s==="l") area=a*t+b*t-t**2; else if(s==="h") area=2*b*t+(a-2*t)*t;
+  document.getElementById("res_mass").textContent = (area*L/1000000*d).toFixed(3) + " kg";
 }
 </script>
 
