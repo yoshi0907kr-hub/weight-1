@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>質量計算機</title>
+  <style>
+    body { font-family: sans-serif; background:#f5f5f5; padding:20px; }
+    .box { background:#fff; padding:20px; max-width:420px; border-radius:8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin: auto; }
+    label { display: block; margin-top: 10px; font-weight: bold; }
+    input, select, button { width:100%; margin-bottom:10px; padding:8px; font-size:16px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+    button { background: #28a745; color: white; border: none; cursor: pointer; margin-top: 10px; }
+    button:hover { background: #218838; }
+    .result { font-size:20px; font-weight:bold; color: #333; margin-top: 15px; text-align: center; border-top: 1px solid #eee; padding-top: 10px; }
+  </style>
+</head>
+<body>
+
+<div class="box">
+  <h2>質量計算機（kg）</h2>
+
+  <form onsubmit="calc(); return false;">
+
+    <label>断面形状</label>
+    <select id="selShape">
+      <option value="block">角材 (a × b)</option>
+      <option value="round">丸棒 (直径 a)</option>
+      <option value="l">L形鋼 (a × b × t)</option>
+      <option value="i">I/H形鋼 (a × b × t)</option>
+    </select>
+
+    <label>寸法 a (mm)</label>
+    <input type="number" id="inpA" step="any" placeholder="例: 50">
+
+    <label>寸法 b (mm)</label>
+    <input type="number" id="inpB" step="any" placeholder="例: 50">
+
+    <label>板厚 t (mm) ※鋼材のみ</label>
+    <input type="number" id="inpT" step="any" placeholder="例: 5">
+
+    <label>長さ L (mm)</label>
+    <input type="number" id="inpL" step="any" placeholder="例: 1000">
+
+    <label>密度（g/cm³）</label>
+    <select id="selDensity">
+      <option value="7.85">鉄 (7.85)</option>
+      <option value="2.7">アルミ (2.7)</option>
+      <option value="1.15">MCナイロン (1.15)</option>
+      <option value="1.0">水 (1.0)</option>
+    </select>
+
+    <button type="submit">計算実行</button>
+    <div class="result" id="resArea"></div>
+
+  </form>
+</div>
+
+<script>
+function calc() {
+  // getElementByIdを使って要素を確実に取得
+  const s = document.getElementById("selShape").value;
+  const a = parseFloat(document.getElementById("inpA").value);
+  const b = parseFloat(document.getElementById("inpB").value) || 0;
+  const t = parseFloat(document.getElementById("inpT").value) || 0;
+  const L = parseFloat(document.getElementById("inpL").value);
+  const d = parseFloat(document.getElementById("selDensity").value);
+  const resultDiv = document.getElementById("resArea");
+
+  if (isNaN(a) || isNaN(L)) {
+    resultDiv.textContent = "寸法 a と 長さ L を入力してください";
+    return;
+  }
+
+  let area = 0; // 断面積 (mm2)
+  if (s === "block") {
+    area = a * b;
+  } else if (s === "round") {
+    area = Math.PI * Math.pow((a / 2), 2);
+  } else if (s === "l") {
+    area = (a * t) + (b * t) - (t * t);
+  } else if (s === "i" || s === "h") {
+    area = (2 * b * t) + ((a - 2 * t) * t);
+  }
+
+  // 質量計算: 
+  // 1. 体積 V (mm3) = area * L
+  // 2. mm3 を cm3 に変換 = V / 1000
+  // 3. 質量 (g) = cm3 * 密度(g/cm3)
+  // 4. kg に変換 = g / 1000
+  // つまり、(area * L) / 1,000,000 * 密度
+  const mass = (area * L / 1000000) * d;
+
+  resultDiv.textContent = "質量：約 " + mass.toFixed(3) + " kg";
+}
+</script>
+
+</body>
+</html>
